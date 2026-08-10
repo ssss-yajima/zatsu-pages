@@ -1,0 +1,75 @@
+version: "3"
+
+tasks:
+  default:
+    desc: タスク一覧を表示
+    cmds:
+      - task --list
+    silent: true
+
+  new:
+    desc: '新しいアプリを作る（task new NAME=my-app DESC="説明"）'
+    requires:
+      vars: [NAME]
+    cmds:
+      - node scripts/new-app.mjs {{.NAME}} '{{.DESC}}'
+      - cd apps/{{.NAME}} && npm install
+
+  dev:
+    desc: 開発サーバを起動（task dev APP=hello）
+    requires:
+      vars: [APP]
+    dir: apps/{{.APP}}
+    cmds:
+      - npm run dev
+
+  install:
+    desc: 依存をインストール（task install APP=hello / APP省略で全アプリ）
+    cmds:
+      - |
+        set -e
+        for app in {{if .APP}}"{{.APP}}"{{else}}$(ls apps){{end}}; do
+          echo "==> install $app"
+          (cd "apps/$app" && npm install)
+        done
+
+  check:
+    desc: lint + 型チェック（task check APP=hello / APP省略で全アプリ）
+    cmds:
+      - |
+        set -e
+        for app in {{if .APP}}"{{.APP}}"{{else}}$(ls apps){{end}}; do
+          echo "==> check $app"
+          (cd "apps/$app" && npm run check)
+        done
+
+  fix:
+    desc: lint / format の自動修正（task fix APP=hello / APP省略で全アプリ）
+    cmds:
+      - |
+        set -e
+        for app in {{if .APP}}"{{.APP}}"{{else}}$(ls apps){{end}}; do
+          echo "==> fix $app"
+          (cd "apps/$app" && npm run fix)
+        done
+
+  build:
+    desc: ビルド（task build APP=hello / APP省略で全アプリ）
+    cmds:
+      - |
+        set -e
+        for app in {{if .APP}}"{{.APP}}"{{else}}$(ls apps){{end}}; do
+          echo "==> build $app"
+          (cd "apps/$app" && npm run build)
+        done
+
+  site:
+    desc: 全アプリをビルドし、トップページ込みで http://localhost:8000 でプレビュー
+    cmds:
+      - task: build
+      - |
+        set -e
+        rm -rf _site && mkdir -p _site
+        for app in $(ls apps); do cp -r "apps/$app/dist" "_site/$app"; done
+        node scripts/generate-index.mjs _site
+      - python3 -m http.server 8000 --directory _site

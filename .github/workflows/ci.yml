@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Check changed apps
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -e
+          base=$(git merge-base "origin/$BASE_REF" HEAD)
+          apps=$(git diff --name-only "$base" HEAD -- apps/ | cut -d/ -f2 | sort -u)
+          if [ -z "$apps" ]; then
+            echo "変更されたアプリはありません"
+            exit 0
+          fi
+          for app in $apps; do
+            # ディレクトリごと削除された場合はスキップ
+            [ -d "apps/$app" ] || continue
+            echo "::group::check $app"
+            (cd "apps/$app" && npm ci && npm run check && npm run build)
+            echo "::endgroup::"
+          done
+
+      - name: Index generation smoke test
+        run: |
+          mkdir -p /tmp/site
+          node scripts/generate-index.mjs /tmp/site

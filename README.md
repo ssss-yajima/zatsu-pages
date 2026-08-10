@@ -8,16 +8,20 @@
 
 ## 新しいアプリを足すには
 
+必須コマンドは [go-task](https://taskfile.dev) の Taskfile にまとまっている（開発ルールの全体は [AGENTS.md](AGENTS.md) 参照）:
+
 ```sh
-# 1. テンプレートから雛形を作る
-node scripts/new-app.mjs my-app "アプリの説明"
+# 1. テンプレートから雛形を作る（npm install まで実行される）
+task new NAME=my-app DESC="アプリの説明"
 
 # 2. 開発する
-cd apps/my-app
-npm install
-npm run dev
+task dev APP=my-app
 
-# 3. main に push すると自動でデプロイされる
+# 3. 確認する
+task check APP=my-app   # Biome lint + 型チェック
+task site               # 全ビルド + トップページ込みでローカルプレビュー
+
+# 4. main に push すると自動でデプロイされる（PR を切れば変更アプリだけ CI 検査）
 ```
 
 アプリ一覧に表示される名前や絵文字は、各アプリの `package.json` で変えられる:
@@ -38,6 +42,8 @@ npm run dev
 | UI 層 | アプリごとに自由（vanilla / React など何でも可） |
 | アプリ間の共有 | しない。各アプリは自己完結（コピペ上等） |
 | 依存管理 | 各アプリが自分の `package.json` とロックファイルを持つ。完全独立 |
+| 品質チェック | Biome + tsc（テンプレートに焼き込み）。PR 時は変更アプリのみ CI 検査 |
+| デザイン統一 | 仕組みでは縛らず、AGENTS.md の規範を AI に従わせる |
 
 <details>
 <summary>設計判断の背景</summary>
@@ -54,15 +60,20 @@ npm run dev
 
 ```
 zatsu-pages/
+├── AGENTS.md              # 開発ルール（コマンド・規約・デザイン/品質規範）
+├── CLAUDE.md              # AGENTS.md への参照
+├── Taskfile.yml           # 必須コマンド（task new / dev / check / build / site）
 ├── apps/                  # 各アプリ（1ディレクトリ = 1アプリ = 1デプロイパス）
-│   └── hello/             # 動作確認用サンプル
+│   ├── hello/             # 動作確認用サンプル
+│   └── keisan/            # けいさんれんしゅう（小1向け計算練習）
 ├── templates/
-│   └── vanilla/           # 新アプリの雛形（Vite + TS、フレームワークなし）
+│   └── vanilla/           # 新アプリの雛形（Vite + TS + Biome、フレームワークなし）
 ├── scripts/
 │   ├── new-app.mjs        # テンプレートから新アプリを作る
 │   └── generate-index.mjs # トップページ（アプリ一覧）を生成する
 └── .github/workflows/
-    └── deploy.yml         # main への push で全アプリをビルドして Pages にデプロイ
+    ├── deploy.yml         # main への push で全アプリをビルドして Pages にデプロイ
+    └── ci.yml             # PR で変更のあったアプリだけ check + build
 ```
 
 </details>

@@ -1,19 +1,19 @@
 {
-  "name": "hello",
-  "description": "動作確認用のサンプルアプリ",
+  "name": "keisan",
+  "description": "20問といてタイムをはかる、小学1年生の計算練習",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "zatsu": {
-    "title": "hello",
-    "emoji": "📦"
+    "title": "けいさん れんしゅう",
+    "emoji": "✏️"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
     "check": "biome check . && tsc",
-    "fix": "biome check --write ."
+    "fix": "biome check --write .",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.6",
