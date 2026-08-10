@@ -159,13 +159,11 @@ function renderHome(): void {
   $("cards").innerHTML = PATTERNS.map((p) => {
     const list = getRecords(recId(p.id));
     const best = bestOf(list);
-    const foot =
-      best === null
-        ? ""
-        : `
+    // 記録行は常に描画して高さを固定する（設定切替で画面がガタつかないように）
+    const foot = `
         <div class="card-foot">
-          <span>さいこうきろく</span><span class="rec">${fmtKid(best)}</span>
-          <span class="go">${list.length}かい</span>
+          <span>さいこうきろく</span><span class="rec">${best === null ? "−−" : fmtKid(best)}</span>
+          ${list.length ? `<span class="go">${list.length}かい</span>` : ""}
         </div>`;
     return `
       <button class="card" data-id="${p.id}">
