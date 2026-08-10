@@ -17,18 +17,19 @@
       <section id="s-home" class="screen on">
         <p class="eyebrow">1ねんせい さんすう</p>
         <h1 class="title"><u>けいさん</u><br />れんしゅう</h1>
-        <p class="lead">20もん こたえて タイムを はかろう</p>
+        <p class="lead">ぜんもん こたえて タイムを はかろう</p>
         <div id="cards"></div>
         <button type="button" class="big-btn ghost" id="btn-records">きろくを みる</button>
         <div class="home-foot">
+          <button type="button" class="mini" id="btn-count">もんだい: 20もん</button>
           <button type="button" class="mini" id="btn-sound">おと: あり</button>
+          <button type="button" class="mini" id="btn-hint">ヒント: なし</button>
           <button type="button" class="mini warn" id="btn-clear">きろくを けす</button>
         </div>
       </section>
 
       <!-- ============ カウントダウン ============ -->
       <section id="s-count" class="screen">
-        <p id="count-label">よーい</p>
         <div id="count-num">3</div>
       </section>
 
@@ -44,12 +45,18 @@
           <div id="qcard">
             <svg id="maru" viewBox="0 0 240 150" preserveAspectRatio="none" aria-hidden="true">
               <path
-                d="M122 10 C176 8 232 40 231 76 C230 112 176 142 118 141 C58 140 9 110 10 74 C11 38 62 12 122 10"
+                d="M118 141 C58 140 9 110 10 74 C11 38 62 12 122 10 C176 8 232 40 231 76 C230 112 176 142 118 141"
               />
             </svg>
-            <span class="n" id="q-a">9</span>
+            <span class="col">
+              <span class="dots" id="dots-a" hidden></span>
+              <span class="n" id="q-a">9</span>
+            </span>
             <span class="op" id="q-op">＋</span>
-            <span class="n" id="q-b">2</span>
+            <span class="col">
+              <span class="dots" id="dots-b" hidden></span>
+              <span class="n" id="q-b">2</span>
+            </span>
             <span class="eq">＝</span>
             <span class="ans" id="q-ans">?</span>
           </div>
@@ -72,11 +79,11 @@
         </div>
         <div class="rec-tabs" id="rec-tabs"></div>
         <div class="sheet rank">
-          <h3>はやい じゅんばん</h3>
+          <h3>ランキング</h3>
           <ol id="rec-rank"></ol>
         </div>
         <div class="sheet rank">
-          <h3>さいきんの きろく</h3>
+          <h3>きろく</h3>
           <ol id="rec-history"></ol>
         </div>
       </section>
@@ -91,7 +98,7 @@
           <em id="r-note"></em>
         </div>
         <div class="sheet rank">
-          <h3>はやい じゅんばん</h3>
+          <h3>ランキング</h3>
           <ol id="r-rank"></ol>
         </div>
         <div class="btn-row">

@@ -21,7 +21,12 @@ import {
   bestOf,
   clearRecords,
   getRecords,
+  loadHintOn,
+  loadQuizCount,
   loadSoundOn,
+  type QuizCount,
+  saveHintOn,
+  saveQuizCount,
   saveSoundOn,
 } from "./storage";
 import "./style.css";
@@ -95,13 +100,73 @@ function toggleSound(): void {
 }
 
 /* ============================================================
+   かずのヒント（数を◯●で見せる）
+   ============================================================ */
+let hintOn = false;
+
+function paintHintButton(): void {
+  $("btn-hint").textContent = `ヒント: ${hintOn ? "あり" : "なし"}`;
+}
+
+function toggleHint(): void {
+  hintOn = !hintOn;
+  paintHintButton();
+  saveHintOn(hintOn);
+}
+
+/* 2桁が出るモードでは10個で改行し、10のまとまり（黄5+赤5）を見せる。
+   1桁だけのモードは5個で改行（黄5のあと赤）。 */
+/* ============================================================
+   もんだいのかず（10もん / 20もん）
+   記録は問題数ごとに別枠。20もんは従来キーのまま引き継ぐ
+   ============================================================ */
+let quizCount: QuizCount = 20;
+
+function recId(patternId: string): string {
+  return quizCount === 20 ? patternId : `${patternId}:${quizCount}`;
+}
+
+function paintCountButton(): void {
+  $("btn-count").textContent = `もんだい: ${quizCount}もん`;
+}
+
+function toggleCount(): void {
+  quizCount = quizCount === 20 ? 10 : 20;
+  paintCountButton();
+  saveQuizCount(quizCount);
+  renderHome();
+}
+
+function renderDots(el: HTMLElement, n: number, tenWrap: boolean): void {
+  if (!hintOn) {
+    el.hidden = true;
+    return;
+  }
+  let html = "";
+  for (let i = 1; i <= n; i++) {
+    const posInRow = tenWrap ? ((i - 1) % 10) + 1 : i;
+    html += `<i class="dot ${posInRow <= 5 ? "y" : "r"}"></i>`;
+  }
+  el.className = tenWrap ? "dots ten" : "dots";
+  el.innerHTML = html;
+  el.hidden = false;
+}
+
+/* ============================================================
    ホーム
    ============================================================ */
 function renderHome(): void {
   $("cards").innerHTML = PATTERNS.map((p) => {
-    const list = getRecords(p.id);
+    const list = getRecords(recId(p.id));
     const best = bestOf(list);
-    const n = list.length;
+    const foot =
+      best === null
+        ? ""
+        : `
+        <div class="card-foot">
+          <span>さいこうきろく</span><span class="rec">${fmtKid(best)}</span>
+          <span class="go">${list.length}かい</span>
+        </div>`;
     return `
       <button class="card" data-id="${p.id}">
         <div class="card-top">
@@ -110,15 +175,7 @@ function renderHome(): void {
             <h2>${p.title}</h2>
             <p class="hint">${p.hint}</p>
           </span>
-        </div>
-        <div class="card-foot">
-          ${
-            best === null
-              ? `<span>まだ やってないよ</span>`
-              : `<span>いちばん はやい</span><span class="rec">${fmtKid(best)}</span>`
-          }
-          <span class="go">${n ? `${n}かい ▶` : "▶"}</span>
-        </div>
+        </div>${foot}
       </button>`;
   }).join("");
   show("home");
@@ -134,7 +191,6 @@ function rankRow(r: { t: number; m: number; d: string }, i: number): string {
     <li class="${i === 0 ? "top" : ""}">
       <span class="no">${i + 1}</span>
       <span class="t">${fmtKid(r.t)}</span>
-      <span class="m">まちがい ${r.m}</span>
       <span class="d">${fmtDate(r.d)}</span>
     </li>`;
 }
@@ -147,7 +203,7 @@ function renderRecords(): void {
     </button>`,
   ).join("");
 
-  const list = getRecords(recordsPatternId);
+  const list = getRecords(recId(recordsPatternId));
   const empty = `<li class="empty">まだ きろくが ないよ</li>`;
 
   const best5 = list
@@ -164,7 +220,6 @@ function renderRecords(): void {
     <li>
       <span class="hd">${fmtDate(r.d)}</span>
       <span class="t">${fmtKid(r.t)}</span>
-      <span class="m">まちがい ${r.m}</span>
     </li>`,
       )
       .join("") || empty;
@@ -192,6 +247,7 @@ function onClearClick(): void {
   b.textContent = "きろくを けす";
   for (const p of PATTERNS) {
     clearRecords(p.id);
+    clearRecords(`${p.id}:10`);
   }
   renderHome();
 }
@@ -287,7 +343,7 @@ function start(): void {
   if (!pattern) {
     return;
   }
-  state.queue = shuffle(pattern.pairs);
+  state.queue = shuffle(pattern.pairs).slice(0, quizCount);
   state.idx = 0;
   state.mistakes = 0;
   state.locked = false;
@@ -322,6 +378,9 @@ function renderQuestion(): void {
   $("q-op").textContent = op.sym;
   $("q-b").textContent = String(b);
   $("q-ans").textContent = "?";
+  const tenWrap = pattern.pairs.some(([x, y]) => x > 9 || y > 9);
+  renderDots($("dots-a"), a, tenWrap);
+  renderDots($("dots-b"), b, tenWrap);
   $("maru").classList.remove("draw");
 
   const cells = $("stamps").children;
@@ -392,8 +451,8 @@ function finish(elapsed: number): void {
   cancelAnimationFrame(state.raf);
   sndGoal();
 
-  const prevBest = bestOf(getRecords(pattern.id));
-  addRecord(pattern.id, {
+  const prevBest = bestOf(getRecords(recId(pattern.id)));
+  addRecord(recId(pattern.id), {
     t: Math.round(elapsed),
     m: state.mistakes,
     d: new Date().toISOString(),
@@ -419,27 +478,17 @@ function finish(elapsed: number): void {
   hanamaru.style.animation = "";
 
   $("r-time").innerHTML = fmtKidHtml(elapsed);
-  $("r-note").innerHTML =
+  $("r-note").textContent =
     state.mistakes === 0
       ? "ぜんもん いっぱつ せいかい！ すごい！"
-      : `${state.queue.length}もん ぜんぶ とけたよ！<br /><small>まちがい ${state.mistakes}かい</small>`;
+      : `${state.queue.length}もん ぜんぶ とけたよ！`;
 
-  const best3 = getRecords(pattern.id)
+  const best3 = getRecords(recId(pattern.id))
     .slice()
     .sort((x, y) => x.t - y.t)
     .slice(0, 3);
   $("r-rank").innerHTML =
-    best3
-      .map(
-        (r, i) => `
-    <li class="${i === 0 ? "top" : ""}">
-      <span class="no">${i + 1}</span>
-      <span class="t">${fmtKid(r.t)}</span>
-      <span class="m">まちがい ${r.m}</span>
-      <span class="d">${fmtDate(r.d)}</span>
-    </li>`,
-      )
-      .join("") || `<li class="empty">きろくが ありません</li>`;
+    best3.map(rankRow).join("") || `<li class="empty">きろくが ありません</li>`;
 
   show("result");
 }
@@ -539,6 +588,8 @@ $("pad").addEventListener("click", (e) => {
 
 $("btn-sound").addEventListener("click", toggleSound);
 $("btn-sound2").addEventListener("click", toggleSound);
+$("btn-hint").addEventListener("click", toggleHint);
+$("btn-count").addEventListener("click", toggleCount);
 $("btn-clear").addEventListener("click", onClearClick);
 $("btn-records").addEventListener("click", renderRecords);
 $("btn-records-back").addEventListener("click", goHome);
@@ -562,4 +613,8 @@ $("btn-again").addEventListener("click", () => {
 validatePatterns();
 setSoundOn(loadSoundOn());
 paintSoundButtons();
+hintOn = loadHintOn();
+paintHintButton();
+quizCount = loadQuizCount();
+paintCountButton();
 renderHome();

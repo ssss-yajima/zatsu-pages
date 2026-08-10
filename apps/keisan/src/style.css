@@ -215,7 +215,7 @@ button:focus-visible {
 .card-foot .rec {
   font-size: 20px;
   font-weight: 800;
-  color: var(--pencil);
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
@@ -228,9 +228,10 @@ button:focus-visible {
 
 .home-foot {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 4px 14px;
   margin-top: 4px;
 }
 .mini {
@@ -274,11 +275,6 @@ button:focus-visible {
     transform: scale(1);
     opacity: 1;
   }
-}
-#count-label {
-  font-size: 14px;
-  letter-spacing: 0.3em;
-  color: var(--ink-2);
 }
 
 /* ---------- プレイ ---------- */
@@ -373,11 +369,62 @@ button:focus-visible {
 }
 #qcard {
   position: relative;
-  padding: 14px 26px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  /* 問題をキーパッド寄り（下）に置き、視線と指の移動距離を縮める */
+  top: 20px;
+  padding: 14px 8px;
+  /* 固定5スロットのグリッド。ドット数や桁数が変わっても数字・記号の位置がブレない */
+  display: grid;
+  grid-template-columns:
+    min(96px, 25vw) min(40px, 10vw) min(96px, 25vw) min(40px, 10vw)
+    min(80px, 20vw);
+  column-gap: 2px;
+  align-items: end;
+  justify-items: center;
   font-variant-numeric: tabular-nums;
+}
+#qcard .col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+#qcard .op,
+#qcard .eq {
+  /* 数字（大）の視覚的中央に合わせるための持ち上げ */
+  margin-bottom: 0.15em;
+}
+
+/* かずのヒント: 1〜5こめは黄色の◯、6こめからは赤の● を5こずつ並べる */
+.dots {
+  display: grid;
+  grid-template-columns: repeat(5, 14px);
+  gap: 4px;
+  justify-content: center;
+}
+/* 2桁モードは10個で1行。固定スロット（約96px）に収まる小ささにする */
+.dots.ten {
+  grid-template-columns: repeat(10, 8px);
+  gap: 1.5px;
+}
+.dots.ten i {
+  width: 8px;
+  height: 8px;
+}
+
+.dots[hidden] {
+  display: none;
+}
+.dots i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+.dots i.y {
+  background: var(--stamp);
+}
+.dots i.r {
+  background: var(--pencil);
 }
 #qcard .n {
   font-size: clamp(46px, 15vw, 74px);
@@ -387,16 +434,19 @@ button:focus-visible {
 #qcard .op {
   font-size: clamp(30px, 9vw, 44px);
   font-weight: 800;
+  line-height: 1;
   color: var(--ink-2);
 }
 #qcard .eq {
   font-size: clamp(30px, 9vw, 44px);
   font-weight: 800;
+  line-height: 1;
   color: var(--ink-2);
 }
 #qcard .ans {
   font-size: clamp(46px, 15vw, 74px);
   font-weight: 800;
+  line-height: 1;
   color: var(--pencil);
   min-width: 1.1em;
   text-align: center;
@@ -458,9 +508,11 @@ button:focus-visible {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 7px;
+  /* 画面下端（ジェスチャーバー）との距離を広く取り誤操作を防ぐ */
+  margin-bottom: 30px;
 }
 .key {
-  min-height: clamp(54px, 10.5vh, 82px);
+  min-height: clamp(58px, 10.5vh, 86px);
   background: var(--key);
   border: 1.5px solid var(--key-edge);
   border-radius: 12px;

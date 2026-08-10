@@ -64,3 +64,11 @@ export function bestOf(list: PlayRecord[]): number | null {
 
 export const loadSoundOn = (): boolean => load("sound", true);
 export const saveSoundOn = (on: boolean): void => save("sound", on);
+
+export const loadHintOn = (): boolean => load("hint", false);
+export const saveHintOn = (on: boolean): void => save("hint", on);
+
+export type QuizCount = 10 | 20;
+export const loadQuizCount = (): QuizCount =>
+  load<number>("count", 20) === 10 ? 10 : 20;
+export const saveQuizCount = (n: QuizCount): void => save("count", n);
