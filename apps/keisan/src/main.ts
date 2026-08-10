@@ -162,7 +162,7 @@ function renderRecords(): void {
       .map(
         (r) => `
     <li>
-      <span class="d">${fmtDate(r.d)}</span>
+      <span class="hd">${fmtDate(r.d)}</span>
       <span class="t">${fmtKid(r.t)}</span>
       <span class="m">まちがい ${r.m}</span>
     </li>`,
@@ -381,7 +381,7 @@ function answer(n: number, btn: HTMLButtonElement): void {
       state.idx++;
       renderQuestion();
     }
-  }, 420);
+  }, 260);
 }
 
 function finish(elapsed: number): void {

@@ -1,6 +1,9 @@
 import "./style.css";
 
-const app = document.querySelector<HTMLDivElement>("#app")!;
+const app = document.querySelector<HTMLDivElement>("#app");
+if (!app) {
+  throw new Error("#app が見つかりません");
+}
 
 app.innerHTML = `
   <main>

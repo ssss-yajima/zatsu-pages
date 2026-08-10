@@ -66,8 +66,9 @@ button:focus-visible {
   height: 100dvh;
   max-width: 520px;
   margin: 0 auto;
+  /* 下は広めに取る。キーパッドがスマホのジェスチャーバーに近いと誤操作するため */
   padding: calc(env(safe-area-inset-top) + 10px) 12px
-    calc(env(safe-area-inset-bottom) + 10px);
+    calc(env(safe-area-inset-bottom) + 28px);
 }
 .screen {
   display: none;
@@ -444,7 +445,7 @@ button:focus-visible {
   opacity: 1;
 }
 #maru.draw path {
-  animation: draw 0.34s ease-out forwards;
+  animation: draw 0.18s ease-out forwards;
 }
 @keyframes draw {
   to {
@@ -520,10 +521,6 @@ button:focus-visible {
   border-color: var(--ink);
   color: var(--ink);
   background: #fffbe8;
-}
-/* りれきは日付を左端に置く（ランキングの右寄せ日付を打ち消す） */
-#rec-history li .d {
-  margin-left: 0;
 }
 
 /* はなまる（全問完走のごほうび） */
@@ -685,6 +682,12 @@ button:focus-visible {
 }
 .rank li .d {
   margin-left: auto;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+/* りれき用の日付。ランキングと違い左端に置く */
+.rank li .hd {
   color: var(--ink-2);
   font-size: 11.5px;
   font-variant-numeric: tabular-nums;
