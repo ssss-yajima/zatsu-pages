@@ -43,5 +43,7 @@ function tone(
 export const sndOk = (): void => tone([880, 1318]);
 export const sndNg = (): void => tone([196], 0.16, "square");
 export const sndGoal = (): void => tone([523, 659, 784, 1046], 0.13);
+export const sndFanfare = (): void =>
+  tone([523, 659, 784, 1046, 784, 1046, 1318], 0.15);
 export const sndTick = (): void => tone([660], 0.07, "triangle");
 export const sndStart = (): void => tone([784, 1046], 0.12);

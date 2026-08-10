@@ -19,6 +19,7 @@
         <h1 class="title"><u>けいさん</u><br />れんしゅう</h1>
         <p class="lead">20もん こたえて タイムを はかろう</p>
         <div id="cards"></div>
+        <button type="button" class="big-btn ghost" id="btn-records">きろくを みる</button>
         <div class="home-foot">
           <button type="button" class="mini" id="btn-sound">おと: あり</button>
           <button type="button" class="mini warn" id="btn-clear">きろくを けす</button>
@@ -63,10 +64,28 @@
         </div>
       </section>
 
+      <!-- ============ きろく（ランキングとりれき） ============ -->
+      <section id="s-records" class="screen">
+        <div class="bar">
+          <button type="button" class="quit" id="btn-records-back" aria-label="もどる">←</button>
+          <h2 class="records-title">きろく</h2>
+        </div>
+        <div class="rec-tabs" id="rec-tabs"></div>
+        <div class="sheet rank">
+          <h3>はやい じゅんばん</h3>
+          <ol id="rec-rank"></ol>
+        </div>
+        <div class="sheet rank">
+          <h3>さいきんの きろく</h3>
+          <ol id="rec-history"></ol>
+        </div>
+      </section>
+
       <!-- ============ けっか ============ -->
       <section id="s-result" class="screen">
         <div id="badge" hidden></div>
         <div class="sheet result-time">
+          <span id="hanamaru" class="hanamaru" hidden>💮</span>
           <small>かかった じかん</small>
           <b id="r-time">0.0</b>
           <em id="r-note"></em>
@@ -81,6 +100,7 @@
         </div>
       </section>
     </div>
+    <canvas id="confetti" hidden></canvas>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

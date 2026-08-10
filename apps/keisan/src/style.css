@@ -491,6 +491,66 @@ button:focus-visible {
   color: var(--pencil);
 }
 
+/* ---------- きろく（ランキングとりれき） ---------- */
+#s-records {
+  gap: 10px;
+  overflow-y: auto;
+}
+.records-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+.rec-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.rec-tab {
+  border: 1.5px solid var(--key-edge);
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 6px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.rec-tab.on {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: #fffbe8;
+}
+/* りれきは日付を左端に置く（ランキングの右寄せ日付を打ち消す） */
+#rec-history li .d {
+  margin-left: 0;
+}
+
+/* はなまる（全問完走のごほうび） */
+.result-time {
+  position: relative;
+}
+.hanamaru {
+  position: absolute;
+  top: -22px;
+  right: -8px;
+  font-size: 64px;
+  line-height: 1;
+  transform: rotate(12deg);
+  animation: stamp 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+  pointer-events: none;
+}
+
+/* 紙吹雪（しんきろくのお祝い） */
+#confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+}
+
 /* やめる確認ダイアログ */
 .overlay {
   position: fixed;

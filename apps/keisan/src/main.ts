@@ -1,6 +1,7 @@
 import {
   isSoundOn,
   setSoundOn,
+  sndFanfare,
   sndGoal,
   sndNg,
   sndOk,
@@ -36,9 +37,9 @@ function $(id: string): HTMLElement {
   return el;
 }
 
-/* プレイ中の時計用。分:秒表記は1年生に読めないので常に秒 */
+/* プレイ中の時計用。1年生に読めるよう分:秒や小数を使わず整数の秒だけ */
 function fmt(ms: number): string {
-  return (ms / 1000).toFixed(1);
+  return String(Math.floor(ms / 1000));
 }
 
 /* 結果・ホーム用。単位付きで読み上げられる形にする */
@@ -69,7 +70,7 @@ function shuffle<T>(arr: readonly T[]): T[] {
   return a;
 }
 
-function show(name: "home" | "count" | "play" | "result"): void {
+function show(name: "home" | "count" | "play" | "result" | "records"): void {
   for (const s of document.querySelectorAll(".screen")) {
     s.classList.remove("on");
   }
@@ -121,6 +122,54 @@ function renderHome(): void {
       </button>`;
   }).join("");
   show("home");
+}
+
+/* ============================================================
+   きろく（ランキングとりれき）
+   ============================================================ */
+let recordsPatternId = PATTERNS[0]?.id ?? "";
+
+function rankRow(r: { t: number; m: number; d: string }, i: number): string {
+  return `
+    <li class="${i === 0 ? "top" : ""}">
+      <span class="no">${i + 1}</span>
+      <span class="t">${fmtKid(r.t)}</span>
+      <span class="m">まちがい ${r.m}</span>
+      <span class="d">${fmtDate(r.d)}</span>
+    </li>`;
+}
+
+function renderRecords(): void {
+  $("rec-tabs").innerHTML = PATTERNS.map(
+    (p) => `
+    <button type="button" class="rec-tab ${p.id === recordsPatternId ? "on" : ""}" data-id="${p.id}">
+      ${OPS[p.op].sym} ${p.title}
+    </button>`,
+  ).join("");
+
+  const list = getRecords(recordsPatternId);
+  const empty = `<li class="empty">まだ きろくが ないよ</li>`;
+
+  const best5 = list
+    .slice()
+    .sort((x, y) => x.t - y.t)
+    .slice(0, 5);
+  $("rec-rank").innerHTML = best5.map(rankRow).join("") || empty;
+
+  $("rec-history").innerHTML =
+    list
+      .slice(0, 10)
+      .map(
+        (r) => `
+    <li>
+      <span class="d">${fmtDate(r.d)}</span>
+      <span class="t">${fmtKid(r.t)}</span>
+      <span class="m">まちがい ${r.m}</span>
+    </li>`,
+      )
+      .join("") || empty;
+
+  show("records");
 }
 
 /* 記録のけしかたは2タップ（まちがえて消さないように） */
@@ -245,7 +294,7 @@ function start(): void {
 
   buildPad(pattern);
   $("stamps").innerHTML = state.queue.map(() => "<i></i>").join("");
-  $("clock").textContent = "0.0";
+  $("clock").textContent = "0";
   show("play");
   renderQuestion();
 
@@ -357,9 +406,17 @@ function finish(elapsed: number): void {
   if (isFirst || isBest) {
     badge.hidden = false;
     badge.textContent = isFirst ? "はじめての きろく！" : "しんきろく！";
+    sndFanfare();
+    celebrate();
   } else {
     badge.hidden = true;
   }
+  // 全問完走のごほうび。新記録でなくても必ずはなまる
+  const hanamaru = $("hanamaru");
+  hanamaru.hidden = false;
+  hanamaru.style.animation = "none";
+  void hanamaru.offsetWidth;
+  hanamaru.style.animation = "";
 
   $("r-time").innerHTML = fmtKidHtml(elapsed);
   $("r-note").innerHTML =
@@ -385,6 +442,55 @@ function finish(elapsed: number): void {
       .join("") || `<li class="empty">きろくが ありません</li>`;
 
   show("result");
+}
+
+/* しんきろくの紙吹雪 */
+function celebrate(): void {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return;
+  }
+  const canvas = $("confetti") as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return;
+  }
+  canvas.hidden = false;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colors = ["#e5432c", "#ffc93c", "#2fae63", "#4aa3e0", "#1f3552"];
+  const parts = Array.from({ length: 90 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * canvas.height * 0.4,
+    w: 6 + Math.random() * 6,
+    h: 8 + Math.random() * 8,
+    vx: -1 + Math.random() * 2,
+    vy: 2.2 + Math.random() * 3,
+    rot: Math.random() * Math.PI,
+    vr: -0.15 + Math.random() * 0.3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+  }));
+  const end = performance.now() + 2400;
+  const step = (now: number) => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of parts) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    }
+    if (now < end) {
+      requestAnimationFrame(step);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.hidden = true;
+    }
+  };
+  requestAnimationFrame(step);
 }
 
 function goHome(): void {
@@ -434,6 +540,15 @@ $("pad").addEventListener("click", (e) => {
 $("btn-sound").addEventListener("click", toggleSound);
 $("btn-sound2").addEventListener("click", toggleSound);
 $("btn-clear").addEventListener("click", onClearClick);
+$("btn-records").addEventListener("click", renderRecords);
+$("btn-records-back").addEventListener("click", goHome);
+$("rec-tabs").addEventListener("click", (e) => {
+  const t = (e.target as HTMLElement).closest<HTMLButtonElement>(".rec-tab");
+  if (t?.dataset.id) {
+    recordsPatternId = t.dataset.id;
+    renderRecords();
+  }
+});
 $("btn-quit").addEventListener("click", openQuitDialog);
 $("btn-quit-yes").addEventListener("click", goHome);
 $("btn-quit-no").addEventListener("click", resumePlay);
