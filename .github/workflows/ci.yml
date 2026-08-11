@@ -41,3 +41,16 @@ jobs:
         run: |
           mkdir -p /tmp/site
           node scripts/generate-index.mjs /tmp/site
+
+      - name: Scaffold smoke test
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -e
+          base=$(git merge-base "origin/$BASE_REF" HEAD)
+          if git diff --name-only "$base" HEAD -- templates/ scripts/new-app.mjs | grep -q .; then
+            node scripts/new-app.mjs ci-smoke "CI検証用の使い捨てアプリ"
+            (cd apps/ci-smoke && npm install && npm run check && npm run build)
+          else
+            echo "templates/ と new-app.mjs に変更なし、スキップ"
+          fi
