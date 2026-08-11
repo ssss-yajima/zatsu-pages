@@ -475,7 +475,9 @@ function finish(elapsed: number): void {
   void hanamaru.offsetWidth;
   hanamaru.style.animation = "";
 
-  $("r-time").innerHTML = fmtKidHtml(elapsed);
+  const rTime = $("r-time");
+  rTime.innerHTML = fmtKidHtml(elapsed);
+  rTime.classList.toggle("long", elapsed >= 60_000);
   $("r-note").textContent =
     state.mistakes === 0
       ? "ぜんもん いっぱつ せいかい！ すごい！"
