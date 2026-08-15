@@ -1,0 +1,23 @@
+{
+  "name": "piano",
+  "description": "楽譜の読み方・記号を学び、練習を記録するピアノ初心者向けアプリ",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "zatsu": {
+    "title": "ピアノのきほん",
+    "emoji": "🎹"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "check": "biome check . && tsc",
+    "fix": "biome check --write .",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.6",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.0"
+  }
+}
