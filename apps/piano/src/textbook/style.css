@@ -127,6 +127,24 @@ b {
 .toc-title {
   font-weight: 700;
   margin-bottom: 0.4rem;
+  cursor: pointer;
+  list-style: none;
+}
+.toc-title::-webkit-details-marker {
+  display: none;
+}
+@media (max-width: 800px) {
+  .toc-title::after {
+    content: " ▾";
+    color: var(--muted);
+  }
+  .toc-details[open] .toc-title::after {
+    content: " ▴";
+  }
+}
+.toc a.is-current {
+  color: var(--accent);
+  font-weight: 700;
 }
 .toc ol {
   list-style: none;
@@ -258,9 +276,8 @@ b {
   margin: 0 auto;
 }
 .fig svg.staff {
-  width: auto;
-  height: 130px;
-  max-width: none;
+  /* 幅は fitStaff() が min(100%, 自然幅) を指定する */
+  height: auto;
   color: #111;
 }
 .fig svg.fig-svg {
@@ -291,6 +308,9 @@ td {
 }
 th {
   background: var(--bg);
+  white-space: nowrap;
+}
+td.nw {
   white-space: nowrap;
 }
 .callout {
@@ -358,4 +378,52 @@ th {
   font-size: 0.85rem;
   text-align: center;
   padding: 1rem 0 2rem;
+}
+
+/* ---- 章の前後ナビ・目次へ戻る ---- */
+.chapter-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+.chapter-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.6rem;
+  text-decoration: none;
+  border-radius: 8px;
+}
+.chapter-nav a:hover {
+  background: var(--accent-soft);
+}
+.to-toc {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  text-decoration: none;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+@media (min-width: 801px) {
+  .to-toc {
+    display: none;
+  }
+}
+html {
+  scroll-behavior: smooth;
 }

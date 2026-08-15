@@ -50,7 +50,7 @@ export function keyboard(opts: KeyboardOpts = {}): string {
   const H = 130;
   const BW = 24;
   const BH = 80;
-  const top = opts.marks?.some((m) => m.label) ? 26 : 8;
+  const top = opts.marks?.some((m) => m.label) ? 28 : 8;
   const width = n * W + 2;
   const height = top + H + 8;
   let out = svgOpen(width, height, opts.caption ?? "鍵盤の図");
@@ -84,10 +84,10 @@ export function keyboard(opts: KeyboardOpts = {}): string {
     }
     const isC = w.letter === 0;
     if (opts.showNames || (opts.showC && isC)) {
-      out += `<text x="${w.x + W / 2}" y="${top + H - 6}" text-anchor="middle" font-size="11" fill="#333" font-weight="${isC ? 700 : 400}">${LETTER_JA[w.letter]}${isC && !opts.showNames ? w.octave : ""}</text>`;
+      out += `<text x="${w.x + W / 2}" y="${top + H - 6}" text-anchor="middle" font-size="13" fill="#333" font-weight="${isC ? 700 : 400}">${LETTER_JA[w.letter]}${isC && !opts.showNames ? w.octave : ""}</text>`;
     }
     if (mk?.label) {
-      out += `<text x="${w.x + W / 2}" y="${top - 8}" text-anchor="middle" font-size="14" font-weight="700" fill="${fill}">${esc(mk.label)}</text>`;
+      out += `<text x="${w.x + W / 2}" y="${top - 8}" text-anchor="middle" font-size="17" font-weight="700" fill="${fill}">${esc(mk.label)}</text>`;
     }
   }
   // 黒鍵
@@ -101,7 +101,7 @@ export function keyboard(opts: KeyboardOpts = {}): string {
     const fill = mk ? COLORS[mk.color ?? "accent"] : "#1a1613";
     out += `<rect x="${x}" y="${top}" width="${BW}" height="${BH}" fill="${fill}" rx="2"/>`;
     if (mk?.label) {
-      out += `<text x="${x + BW / 2}" y="${top - 8}" text-anchor="middle" font-size="14" font-weight="700" fill="${fill}">${esc(mk.label)}</text>`;
+      out += `<text x="${x + BW / 2}" y="${top - 8}" text-anchor="middle" font-size="17" font-weight="700" fill="${fill}">${esc(mk.label)}</text>`;
     }
   }
   // 矢印（親指くぐり等）
@@ -149,10 +149,10 @@ export function hands(): string {
       if (num === 1) {
         // 親指は斜め
         out += `<g transform="rotate(${s * 40} ${x} 130)"><rect x="${x - wd / 2}" y="${130 - len}" width="${wd}" height="${len + 10}" rx="7" fill="#fde9d9" stroke="#b5542d" stroke-width="1.5"/></g>`;
-        out += `<text x="${x + s * 42}" y="96" text-anchor="middle" font-size="16" font-weight="700" fill="#b5542d">1</text>`;
+        out += `<text x="${x + s * 46}" y="100" text-anchor="middle" font-size="18" font-weight="700" fill="#b5542d" style="paint-order:stroke" stroke="#fff" stroke-width="4">1</text>`;
       } else {
         out += `<rect x="${x - wd / 2}" y="${125 - len}" width="${wd}" height="${len + 10}" rx="7" fill="#fde9d9" stroke="#b5542d" stroke-width="1.5"/>`;
-        out += `<text x="${x}" y="${115 - len}" text-anchor="middle" font-size="16" font-weight="700" fill="#b5542d">${num}</text>`;
+        out += `<text x="${x}" y="${115 - len}" text-anchor="middle" font-size="18" font-weight="700" fill="#b5542d">${num}</text>`;
       }
     }
     out += `<text x="${cx}" y="${H - 6}" text-anchor="middle" font-size="13" fill="#333">${label}</text>`;
@@ -203,15 +203,15 @@ export function posture(): string {
     ty: number,
     color = ac,
   ): void => {
-    out += `<text x="8" y="${y}" font-size="11.5" fill="${color}" font-weight="700">${t}</text>`;
-    out += `<line x1="${8 + t.length * 11.5 + 4}" y1="${y - 4}" x2="${tx}" y2="${ty}" stroke="${color}" stroke-dasharray="2 3"/>`;
+    out += `<text x="8" y="${y}" font-size="13" fill="${color}" font-weight="700">${t}</text>`;
+    out += `<line x1="${8 + t.length * 13 + 4}" y1="${y - 4}" x2="${tx}" y2="${ty}" stroke="${color}" stroke-dasharray="2 3"/>`;
   };
   note(38, "頭は背骨の上に", bx - 16, 50);
   note(96, "背中はまっすぐ・肩は下ろす", bx - 2, 92);
   note(134, "肘 ≒ 鍵盤の高さ", elbow[0] - 6, elbow[1]);
   note(178, "椅子の前半分に座る", 190, 156, "#555");
   note(214, "足は床にしっかり", bx + 50, 220);
-  out += `<text x="331" y="108" text-anchor="middle" font-size="11" fill="#2563eb" font-weight="700">手首は平行</text>`;
+  out += `<text x="331" y="108" text-anchor="middle" font-size="12" fill="#b5542d" font-weight="700">手首は平行</text>`;
   return `${out}</svg>`;
 }
 
@@ -220,7 +220,7 @@ export function posture(): string {
 // ---------------------------------------------------------------------------
 export function handArch(): string {
   const W = 420;
-  const H = 170;
+  const H = 145;
   let out = svgOpen(W, H, "良い手の形と悪い手の形の比較");
   const draw = (cx: number, good: boolean): void => {
     // 鍵盤面
@@ -235,13 +235,11 @@ export function handArch(): string {
       for (const dx of [-75, -45, -15, 15, 45]) {
         out += `<circle cx="${cx + dx}" cy="118" r="4" fill="#1f7a4d"/>`;
       }
-      out += `<text x="${cx}" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#1f7a4d">◯ 卵をふわっと持つ丸み</text>`;
-      out += `<text x="${cx}" y="158" text-anchor="middle" font-size="11" fill="#333">指先の腹で鍵盤に触れる・手首は落ちない</text>`;
+      out += `<text x="${cx}" y="26" text-anchor="middle" font-size="15" font-weight="700" fill="#1f7a4d">◯ 卵をふわっと持つ丸み</text>`;
     } else {
       // つぶれた手
       out += `<path d="M${cx - 80},112 C${cx - 60},100 ${cx - 20},96 ${cx + 10},98 C${cx + 45},100 ${cx + 60},108 ${cx + 60},112" fill="#fde9d9" stroke="#b3261e" stroke-width="2.5"/>`;
-      out += `<text x="${cx}" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#b3261e">✕ 指がのびて手首が落ちる</text>`;
-      out += `<text x="${cx}" y="158" text-anchor="middle" font-size="11" fill="#333">関節がへこむ・鍵盤を「押し込む」形</text>`;
+      out += `<text x="${cx}" y="26" text-anchor="middle" font-size="15" font-weight="700" fill="#b3261e">✕ 指がのびて手首が落ちる</text>`;
     }
   };
   draw(110, true);
@@ -298,7 +296,7 @@ export function tempoLadder(): string {
     out += `<text x="${x + 28}" y="${y - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="#333">♩=${bpm}</text>`;
   });
   out += `<text x="${W / 2}" y="18" text-anchor="middle" font-size="12" fill="#333">「3回続けてノーミス」で1段上げる。ミスしたら1段下げる</text>`;
-  out += `<text x="${W / 2}" y="156" text-anchor="middle" font-size="11" fill="#555">目標テンポの 6〜7 割から始める。上げ幅は 5〜10%</text>`;
+  out += `<text x="${W / 2}" y="156" text-anchor="middle" font-size="12" fill="#555">目標テンポの 6〜7 割から始める。上げ幅は 5〜10%</text>`;
   return `${out}</svg>`;
 }
 
@@ -323,10 +321,10 @@ export function pedalTiming(): string {
     d += ` L${x + 6},120 L${x + 12},96 L${x + 18},120`;
   }
   d += " L410,120";
-  out += `<path d="${d}" fill="none" stroke="#2563eb" stroke-width="2.5"/>`;
-  out += `<text x="240" y="140" text-anchor="middle" font-size="11" fill="#2563eb">踏む＝線が下 ／ 弾いた直後に一瞬上げてすぐ踏む（音が濁らない）</text>`;
+  out += `<path d="${d}" fill="none" stroke="#b5542d" stroke-width="2.5"/>`;
+  out += `<text x="240" y="142" text-anchor="middle" font-size="12" fill="#333">線が下＝踏んでいる。弾いた直後に一瞬上げてすぐ踏む</text>`;
   hits.forEach((x) => {
-    out += `<line x1="${x}" y1="60" x2="${x + 12}" y2="96" stroke="#b5542d" stroke-dasharray="3 3"/>`;
+    out += `<line x1="${x}" y1="60" x2="${x + 12}" y2="96" stroke="#999" stroke-dasharray="3 3"/>`;
   });
   return `${out}</svg>`;
 }
@@ -353,17 +351,18 @@ export function phraseArc(): string {
 // ---------------------------------------------------------------------------
 export function weekPlan(): string {
   const W = 420;
-  const H = 150;
+  const H = 170;
   let out = svgOpen(W, H, "1週間の練習配分の例");
   const days = ["月", "火", "水", "木", "金", "土", "日"];
   const mins = [20, 20, 20, 20, 20, 30, 0];
+  const base = 130;
   days.forEach((d, i) => {
     const x = 20 + i * 56;
-    const h = mins[i] * 3;
-    out += `<rect x="${x}" y="${110 - h}" width="40" height="${h}" fill="${mins[i] === 0 ? "#eee" : "#b5542d"}" rx="3"/>`;
-    out += `<text x="${x + 20}" y="128" text-anchor="middle" font-size="12" fill="#333">${d}</text>`;
-    out += `<text x="${x + 20}" y="${104 - h}" text-anchor="middle" font-size="11" fill="#555">${mins[i] === 0 ? "休" : `${mins[i]}分`}</text>`;
+    const h = mins[i] * 2.6;
+    out += `<rect x="${x}" y="${base - h}" width="40" height="${h}" fill="${mins[i] === 0 ? "#eee" : "#b5542d"}" rx="3"/>`;
+    out += `<text x="${x + 20}" y="${base + 20}" text-anchor="middle" font-size="13" fill="#333">${d}</text>`;
+    out += `<text x="${x + 20}" y="${base - h - 6}" text-anchor="middle" font-size="12" fill="#555">${mins[i] === 0 ? "休" : `${mins[i]}分`}</text>`;
   });
-  out += `<text x="${W / 2}" y="18" text-anchor="middle" font-size="12" fill="#333">毎日 20 分 ＞ 週末に 2 時間。休みの日を1日決めておく</text>`;
+  out += `<text x="${W / 2}" y="20" text-anchor="middle" font-size="13" fill="#333">毎日20分 ＞ 週末に2時間。休みの日を1日決めておく</text>`;
   return `${out}</svg>`;
 }

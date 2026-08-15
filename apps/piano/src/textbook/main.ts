@@ -35,6 +35,20 @@ const esc = (s: string): string =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+/**
+ * 楽譜 SVG は高さ 130px 基準の自然幅を上限にして、狭い画面では幅いっぱいに縮小する
+ * （横スクロールで右半分が隠れるのを防ぐ）
+ */
+function fitStaff(svg: string): string {
+  return svg.replace(
+    /<svg class="staff" viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)"/,
+    (m, w: string, hgt: string) => {
+      const natural = Math.round((Number(w) * 130) / Number(hgt));
+      return `${m} style="width:min(100%, ${natural}px)"`;
+    },
+  );
+}
+
 function blockHtml(b: Block): string {
   let h = '<div class="block">';
   if (b.h) {
@@ -44,7 +58,7 @@ function blockHtml(b: Block): string {
     h += `<p>${b.html}</p>`;
   }
   if (b.fig) {
-    h += `<figure class="fig">${b.fig}${b.cap ? `<figcaption>${b.cap}</figcaption>` : ""}</figure>`;
+    h += `<figure class="fig">${fitStaff(b.fig)}${b.cap ? `<figcaption>${b.cap}</figcaption>` : ""}</figure>`;
   }
   if (b.list) {
     h += `<ul>${b.list.map((li) => `<li>${li}</li>`).join("")}</ul>`;
@@ -52,7 +66,17 @@ function blockHtml(b: Block): string {
   if (b.table) {
     const [head, ...rows] = b.table;
     h += `<div class="table-wrap"><table><thead><tr>${head.map((c) => `<th>${c}</th>`).join("")}</tr></thead><tbody>${rows
-      .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`)
+      .map(
+        (r) =>
+          `<tr>${r
+            .map((c, i) =>
+              // 短い先頭セル（「10分」「♯1」など）は折り返さない
+              i === 0 && c.length <= 6
+                ? `<td class="nw">${c}</td>`
+                : `<td>${c}</td>`,
+            )
+            .join("")}</tr>`,
+      )
       .join("")}</tbody></table></div>`;
   }
   if (b.point) {
@@ -64,7 +88,13 @@ function blockHtml(b: Block): string {
   return `${h}</div>`;
 }
 
+const ALL_CHAPTERS: Chapter[] = PARTS.flatMap((p) => p.chapters);
+
 function chapterHtml(ch: Chapter): string {
+  const idx = ALL_CHAPTERS.indexOf(ch);
+  const prev = ALL_CHAPTERS[idx - 1];
+  const next = ALL_CHAPTERS[idx + 1];
+  const nav = `<nav class="chapter-nav">${prev ? `<a href="#${prev.id}">‹ ${esc(prev.title)}</a>` : "<span></span>"}${next ? `<a href="#${next.id}">${esc(next.title)} ›</a>` : `<a href="#appendix">付録 早見表 ›</a>`}</nav>`;
   const items = ch.checklist
     .map((c, i) => {
       const id = `${ch.id}:${i}`;
@@ -84,6 +114,7 @@ function chapterHtml(ch: Chapter): string {
         <div class="checklist-title">できたらチェック</div>
         ${items}
       </div>
+      ${nav}
     </section>`;
 }
 
@@ -114,9 +145,11 @@ function render(): void {
       </div>
     </header>
     <div class="layout">
-      <nav class="toc" aria-label="目次">
-        <div class="toc-title">目次</div>
-        <ol class="toc-parts">${toc}<li><div class="toc-part">付録</div><ol><li><a href="#appendix">早見表</a></li></ol></li></ol>
+      <nav class="toc" aria-label="目次" id="toc">
+        <details class="toc-details" open>
+          <summary class="toc-title">目次</summary>
+          <ol class="toc-parts">${toc}<li><div class="toc-part">付録</div><ol><li><a href="#appendix">早見表</a></li></ol></li></ol>
+        </details>
       </nav>
       <main class="body">
         <section class="howto">
@@ -144,7 +177,15 @@ function render(): void {
           <p><a href="./">← アプリに戻る</a></p>
         </footer>
       </main>
-    </div>`;
+    </div>
+    <a class="to-toc" href="#toc" aria-label="目次へ戻る">目次 ↑</a>`;
+
+  // スマホでは目次を折りたたんで本文へすぐ行けるようにする
+  const details = app.querySelector<HTMLDetailsElement>(".toc-details");
+  if (details && window.matchMedia("(max-width: 800px)").matches) {
+    details.open = false;
+  }
+  watchCurrentChapter();
 
   for (const cb of Array.from(
     app.querySelectorAll<HTMLInputElement>("input[data-check]"),
@@ -155,6 +196,45 @@ function render(): void {
       // 進捗表示だけ更新（本文はそのまま）
       updateProgress();
     });
+  }
+}
+
+/** 読んでいる章を目次でハイライトする */
+function watchCurrentChapter(): void {
+  const links = new Map<string, HTMLAnchorElement>();
+  for (const a of Array.from(
+    app.querySelectorAll<HTMLAnchorElement>(".toc a"),
+  )) {
+    links.set(a.getAttribute("href")?.slice(1) ?? "", a);
+  }
+  const visible = new Set<string>();
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          visible.add(e.target.id);
+        } else {
+          visible.delete(e.target.id);
+        }
+      }
+      // 画面内にある章のうち、いちばん上のものを現在地にする
+      let current: string | null = null;
+      for (const ch of [...ALL_CHAPTERS.map((c) => c.id), "appendix"]) {
+        if (visible.has(ch)) {
+          current = ch;
+          break;
+        }
+      }
+      for (const [id, a] of links) {
+        a.classList.toggle("is-current", id === current);
+      }
+    },
+    { rootMargin: "-10% 0px -60% 0px" },
+  );
+  for (const sec of Array.from(
+    app.querySelectorAll<HTMLElement>("section[id]"),
+  )) {
+    io.observe(sec);
   }
 }
 
