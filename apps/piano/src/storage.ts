@@ -139,12 +139,15 @@ export interface Settings {
   noteNames: "ja" | "en";
   /** 曲で読むときの音部記号 */
   songClef: "treble" | "bass";
+  /** おんぷクイズで 1 問に出す音符数 */
+  quizNotes: 1 | 3;
 }
 
 export const getSettings = (): Settings => ({
   sound: true,
   noteNames: "ja",
   songClef: "treble",
+  quizNotes: 1,
   ...load<Partial<Settings>>("settings", {}),
 });
 

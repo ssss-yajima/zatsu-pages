@@ -751,6 +751,13 @@ th {
 .note.current {
   color: var(--accent);
 }
+.staff-box.wide {
+  max-width: 340px;
+}
+.muted.small {
+  font-size: 0.85rem;
+  margin-top: 0.3rem;
+}
 .note.current.ng {
   color: var(--bad);
 }
