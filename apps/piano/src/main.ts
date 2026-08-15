@@ -441,11 +441,21 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
         mistakes.push({ q, answered: pc });
       }
       missedThis = true;
+      // 押した鍵盤だけ短く赤く光らせ、正解の鍵盤を緑で示す（押すまで残す）
+      for (const k of keys) {
+        k.classList.remove("ng");
+      }
       key.classList.add("ng");
       note.classList.add("ng");
-      feedback.innerHTML = "<b>ちがいます</b> 正しい鍵盤を押すと進みます";
-      feedback.className = "feedback bad";
+      const correctKey = keys.find(
+        (k) => Number(k.dataset.pc) === pitchClass(q.pitch),
+      );
+      correctKey?.classList.add("ok");
       sndNg();
+      window.setTimeout(() => {
+        key.classList.remove("ng");
+        note.classList.remove("ng");
+      }, 350);
     }
   };
 
