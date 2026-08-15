@@ -15,6 +15,7 @@ import {
 } from "./lessons";
 import {
   ACC_SYMBOL,
+  type Clef,
   enharmonic,
   freq,
   fromStep,
@@ -179,7 +180,9 @@ function updateSoundBtn(): void {
 function renderQuizHome(view: HTMLElement): void {
   const results = getQuizResults();
   const cards = LEVELS.map((lv) => {
-    const rs = results.filter((r) => r.level === lv.id);
+    const rs = results.filter(
+      (r) => r.level === resultKey(lv.id, settings.quizNotes),
+    );
     const last = rs[0];
     const best = rs.reduce((m, r) => Math.max(m, r.correct / r.total), 0);
     // プレビューは出題範囲の真ん中あたりの音を出す
@@ -241,10 +244,17 @@ function renderQuizHome(view: HTMLElement): void {
     <section class="intro">
       <h2>おんぷ読みクイズ</h2>
       <p>五線の音符を見て、鍵盤で答えます。1セット ${QUESTIONS_PER_SET} 問。まずは上から順に、9割正解できたら次のレベルへ。</p>
-      <div class="seg" role="group" aria-label="音名の表記">
-        <button type="button" data-names="ja" class="${settings.noteNames === "ja" ? "on" : ""}">ドレミ</button>
-        <button type="button" data-names="en" class="${settings.noteNames === "en" ? "on" : ""}">CDE</button>
+      <div class="row tight">
+        <div class="seg" role="group" aria-label="1問の音符数">
+          <button type="button" data-notes="1" class="${settings.quizNotes === 1 ? "on" : ""}">1音ずつ</button>
+          <button type="button" data-notes="3" class="${settings.quizNotes === 3 ? "on" : ""}">3音つづけて</button>
+        </div>
+        <div class="seg" role="group" aria-label="音名の表記">
+          <button type="button" data-names="ja" class="${settings.noteNames === "ja" ? "on" : ""}">ドレミ</button>
+          <button type="button" data-names="en" class="${settings.noteNames === "en" ? "on" : ""}">CDE</button>
+        </div>
       </div>
+      <p class="muted small">${settings.quizNotes === 3 ? "3つの音符を左から順に読みます。1音正解するとすぐ次の音へ" : "1音ずつ表示。正解すると次の問題へ"}</p>
     </section>
     <div class="list">${cards}</div>
     <section class="intro song-intro">
@@ -253,6 +263,13 @@ function renderQuizHome(view: HTMLElement): void {
     </section>
     <div class="list">${songCards}</div>`;
 
+  for (const b of $$<HTMLButtonElement>("[data-notes]", view)) {
+    b.addEventListener("click", () => {
+      settings = { ...settings, quizNotes: b.dataset.notes === "3" ? 3 : 1 };
+      saveSettings(settings);
+      renderQuizHome(view);
+    });
+  }
   for (const b of $$<HTMLButtonElement>("[data-names]", view)) {
     b.addEventListener("click", () => {
       settings = {
@@ -294,111 +311,159 @@ function keyboardHtml(): string {
 }
 
 function renderQuizRun(view: HTMLElement, level: Level): void {
+  /** 1 問あたりの音符数（1 or 3）。3 音モードは左から順に答える */
+  const perQ = settings.quizNotes;
+  const clefFor = (): Clef =>
+    level.clefs[Math.floor(Math.random() * level.clefs.length)];
+  /** 同じ音部記号で perQ 個の音を作る */
+  const makeGroup = (prev?: Question): Question[] => {
+    const clef = clefFor();
+    const one = { ...level, clefs: [clef] };
+    const out: Question[] = [];
+    for (let i = 0; i < perQ; i++) {
+      out.push(makeQuestion(one, out[i - 1] ?? prev));
+    }
+    return out;
+  };
+
   let index = 0;
+  let noteIdx = 0;
   let correct = 0;
   const times: number[] = [];
   const mistakes: { q: Question; answered: number }[] = [];
-  let current: Question = makeQuestion(level);
+  let group: Question[] = makeGroup();
   let askedAt = 0;
   let locked = false;
-  let timer: number | undefined;
+  /** この音で一度でも間違えたか（正解数は「一発正解」で数える） */
+  let missedThis = false;
+  const totalNotes = QUESTIONS_PER_SET * perQ;
 
   view.innerHTML = `
     <section class="quiz">
       <div class="quiz-head">
         <a href="#quiz" class="back">‹ レベル一覧</a>
-        <div class="quiz-title">${esc(level.title)}</div>
+        <div class="quiz-title">${esc(level.title)}${perQ > 1 ? ` <span class="badge">${perQ}音</span>` : ""}</div>
         <div class="progress" aria-label="進捗"><div class="bar" id="bar"></div></div>
         <div class="counter" id="counter"></div>
       </div>
-      <div class="staff-box" id="staff-box"></div>
-      <div class="feedback" id="feedback" aria-live="polite"></div>
+      <div class="staff-box ${perQ > 1 ? "wide" : ""}" id="staff-box"></div>
       ${keyboardHtml()}
-      <div class="quiz-actions"><button type="button" class="btn primary" id="next-btn" hidden>次へ</button></div>
     </section>`;
 
   const staffBox = $<HTMLElement>("#staff-box", view);
-  const feedback = $<HTMLElement>("#feedback", view);
-  const nextBtn = $<HTMLButtonElement>("#next-btn", view);
   const keys = $$<HTMLButtonElement>(".key", view);
+  const current = (): Question => group[noteIdx];
+
+  const drawStaff = (): void => {
+    staffBox.innerHTML = staffSvg({
+      clef: group[0].clef,
+      items: group.map((q, i) => ({
+        kind: "note" as const,
+        pitch: q.pitch,
+        cls: i < noteIdx ? "done" : i === noteIdx && perQ > 1 ? "current" : "q",
+      })),
+      padTop: 40,
+      padBottom: 40,
+      minWidth: perQ > 1 ? 190 : 150,
+      ariaLabel: "問題の音符",
+    });
+  };
+  const updateHead = (): void => {
+    const done = index * perQ + noteIdx;
+    $<HTMLElement>("#bar", view).style.width = `${(done / totalNotes) * 100}%`;
+    $<HTMLElement>("#counter", view).textContent =
+      `${index + 1} / ${QUESTIONS_PER_SET}`;
+  };
 
   const showQuestion = (): void => {
     locked = false;
     for (const k of keys) {
       k.classList.remove("ok", "ng");
     }
-    nextBtn.hidden = true;
-    feedback.innerHTML = "&nbsp;";
-    feedback.className = "feedback";
-    staffBox.innerHTML = staffSvg({
-      clef: current.clef,
-      items: [{ kind: "note", pitch: current.pitch, cls: "q" }],
-      padTop: 40,
-      padBottom: 40,
-      minWidth: 150,
-      ariaLabel: "問題の音符",
-    });
-    $<HTMLElement>("#bar", view).style.width =
-      `${(index / QUESTIONS_PER_SET) * 100}%`;
-    $<HTMLElement>("#counter", view).textContent =
-      `${index + 1} / ${QUESTIONS_PER_SET}`;
+    missedThis = false;
+    drawStaff();
+    updateHead();
     askedAt = performance.now();
   };
 
   const advance = (): void => {
     index++;
+    noteIdx = 0;
     if (index >= QUESTIONS_PER_SET) {
       finish();
       return;
     }
-    current = makeQuestion(level, current);
+    group = makeGroup(group[group.length - 1]);
     showQuestion();
   };
 
+  // 正解したら少し待って次へ。間違えたら止まり、正解を押すまで進まない
+  const ADVANCE_MS = 520;
   const answer = (pc: number, key: HTMLButtonElement): void => {
     if (locked) {
       return;
     }
-    locked = true;
-    times.push((performance.now() - askedAt) / 1000);
-    const ok = pc === pitchClass(current.pitch);
-    playFreq(freq(current.pitch));
-    const note = $<SVGElement>(".note", staffBox);
+    const q = current();
+    const ok = pc === pitchClass(q.pitch);
+    const note = $$<SVGElement>(".note", staffBox)[noteIdx];
     if (ok) {
-      correct++;
+      times.push((performance.now() - askedAt) / 1000);
+      if (!missedThis) {
+        correct++;
+      }
+      playFreq(freq(q.pitch));
+      for (const k of keys) {
+        k.classList.remove("ng", "ok");
+      }
       key.classList.add("ok");
+      note.classList.remove("ng");
       note.classList.add("ok");
-      feedback.innerHTML = `<b>正解！</b> ${esc(fullName(current.pitch))}`;
-      feedback.className = "feedback good";
       sndOk();
-      timer = window.setTimeout(advance, 650);
+      // 緑は短く光らせるだけ（次の音に移っても残さない）
+      window.setTimeout(() => {
+        key.classList.remove("ok");
+      }, 300);
+      if (noteIdx + 1 < perQ) {
+        // 3 音モード: 待たずに次の音へ
+        noteIdx++;
+        missedThis = false;
+        askedAt = performance.now();
+        drawStaff();
+        updateHead();
+        return;
+      }
+      locked = true;
+      window.setTimeout(advance, ADVANCE_MS);
     } else {
-      mistakes.push({ q: current, answered: pc });
+      if (!missedThis) {
+        mistakes.push({ q, answered: pc });
+      }
+      missedThis = true;
+      // 押した鍵盤だけ短く赤く光らせる。正解は教えず、当たるまで探させる
+      for (const k of keys) {
+        k.classList.remove("ng");
+      }
       key.classList.add("ng");
       note.classList.add("ng");
-      const correctKey = keys.find(
-        (k) => Number(k.dataset.pc) === pitchClass(current.pitch),
-      );
-      correctKey?.classList.add("ok");
-      feedback.innerHTML = `<b>正解は ${esc(fullName(current.pitch))}</b>`;
-      feedback.className = "feedback bad";
       sndNg();
-      nextBtn.hidden = false;
-      nextBtn.focus();
+      window.setTimeout(() => {
+        key.classList.remove("ng");
+        note.classList.remove("ng");
+      }, 350);
     }
   };
 
   const finish = (): void => {
     const avg = times.reduce((a, b) => a + b, 0) / Math.max(1, times.length);
     addQuizResult({
-      level: level.id,
+      level: resultKey(level.id, perQ),
       correct,
-      total: QUESTIONS_PER_SET,
+      total: totalNotes,
       avgSec: Math.round(avg * 10) / 10,
       at: new Date().toISOString(),
     });
     sndDone();
-    const rate = correct / QUESTIONS_PER_SET;
+    const rate = correct / totalNotes;
     const msg =
       rate === 1
         ? "パーフェクト！次のレベルへ進みましょう"
@@ -408,7 +473,7 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
             ? "あと少し。同じレベルをもう一度"
             : "間違えた音を「まなぶ」で確認してから、もう一度";
     const wrongList = mistakes.length
-      ? `<h3>間違えた音</h3><div class="mistakes">${mistakes
+      ? `<h3>つまずいた音</h3><div class="mistakes">${mistakes
           .map(
             ({ q }) =>
               `<div class="mistake">${staffSvg({ clef: q.clef, items: [{ kind: "note", pitch: q.pitch, label: fullName(q.pitch) }], minWidth: 90 })}</div>`,
@@ -418,8 +483,8 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
     view.innerHTML = `
       <section class="result">
         <h2>けっか</h2>
-        <div class="score"><span class="big">${correct}</span> / ${QUESTIONS_PER_SET}</div>
-        <p class="muted">平均 ${avg.toFixed(1)} 秒/問</p>
+        <div class="score"><span class="big">${correct}</span> / ${totalNotes} <span class="muted">一発正解</span></div>
+        <p class="muted">平均 ${avg.toFixed(1)} 秒/音</p>
         <p class="msg">${msg}</p>
         ${wrongList}
         <div class="row">
@@ -440,15 +505,13 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
       answer(Number(k.dataset.pc), k);
     });
   }
-  nextBtn.addEventListener("click", () => {
-    if (timer) {
-      clearTimeout(timer);
-    }
-    advance();
-  });
 
   showQuestion();
 }
+
+/** 成績の保存キー。3 音モードは別枠で記録する */
+const resultKey = (levelId: string, perQ: number): string =>
+  perQ > 1 ? `${levelId}:${perQ}` : levelId;
 
 // ---------------------------------------------------------------------------
 // 曲で読む
@@ -600,8 +663,6 @@ function renderSongRun(view: HTMLElement, song: Song): void {
       const prevSys = systemOf(index);
       index++;
       flashNg = false;
-      feedback.innerHTML = `<b>${esc(fullName(p))}</b>`;
-      feedback.className = "feedback good";
       if (index >= notes.length) {
         redrawSystem(prevSys);
         updateHead();
@@ -620,8 +681,6 @@ function renderSongRun(view: HTMLElement, song: Song): void {
       flashNg = true;
       sndNg();
       redrawSystem(systemOf(index));
-      feedback.innerHTML = "ちがいます。<b>もう一度</b>";
-      feedback.className = "feedback bad";
       window.setTimeout(() => {
         if (flashNg && !done) {
           flashNg = false;
