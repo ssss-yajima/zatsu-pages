@@ -347,12 +347,10 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
         <div class="counter" id="counter"></div>
       </div>
       <div class="staff-box ${perQ > 1 ? "wide" : ""}" id="staff-box"></div>
-      <div class="feedback" id="feedback" aria-live="polite"></div>
       ${keyboardHtml()}
     </section>`;
 
   const staffBox = $<HTMLElement>("#staff-box", view);
-  const feedback = $<HTMLElement>("#feedback", view);
   const keys = $$<HTMLButtonElement>(".key", view);
   const current = (): Question => group[noteIdx];
 
@@ -383,8 +381,6 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
       k.classList.remove("ok", "ng");
     }
     missedThis = false;
-    feedback.innerHTML = "&nbsp;";
-    feedback.className = "feedback";
     drawStaff();
     updateHead();
     askedAt = performance.now();
@@ -422,9 +418,11 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
       key.classList.add("ok");
       note.classList.remove("ng");
       note.classList.add("ok");
-      feedback.innerHTML = `<b>正解！</b> ${esc(fullName(q.pitch))}`;
-      feedback.className = "feedback good";
       sndOk();
+      // 緑は短く光らせるだけ（次の音に移っても残さない）
+      window.setTimeout(() => {
+        key.classList.remove("ok");
+      }, 300);
       if (noteIdx + 1 < perQ) {
         // 3 音モード: 待たずに次の音へ
         noteIdx++;
@@ -665,8 +663,6 @@ function renderSongRun(view: HTMLElement, song: Song): void {
       const prevSys = systemOf(index);
       index++;
       flashNg = false;
-      feedback.innerHTML = `<b>${esc(fullName(p))}</b>`;
-      feedback.className = "feedback good";
       if (index >= notes.length) {
         redrawSystem(prevSys);
         updateHead();
@@ -685,8 +681,6 @@ function renderSongRun(view: HTMLElement, song: Song): void {
       flashNg = true;
       sndNg();
       redrawSystem(systemOf(index));
-      feedback.innerHTML = "ちがいます。<b>もう一度</b>";
-      feedback.className = "feedback bad";
       window.setTimeout(() => {
         if (flashNg && !done) {
           flashNg = false;
