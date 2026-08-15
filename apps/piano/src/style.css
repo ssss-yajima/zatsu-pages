@@ -17,6 +17,11 @@
   --key-white: #fffdf9;
   --key-black: #2b2622;
   --tip-bg: #fdf3e2;
+  /* 楽譜は常に白い紙に黒い音符（ダークモードでも反転しない） */
+  --paper: #fffdf8;
+  --paper-ink: #1a1613;
+  --paper-muted: #9a938a;
+  --paper-line: #e6dfd5;
   --nav-h: 64px;
 }
 @media (prefers-color-scheme: dark) {
@@ -170,6 +175,10 @@ main {
 .level-preview {
   width: 84px;
   flex: none;
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
+  border-radius: 8px;
+  padding: 2px 4px;
 }
 .level-preview svg {
   width: 100%;
@@ -284,11 +293,11 @@ svg.staff {
   width: 100%;
   height: auto;
   display: block;
-  color: var(--ink);
+  color: var(--paper-ink);
 }
 .staff-box {
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
   border-radius: 14px;
   padding: 0.4rem 1rem;
   margin: 0.6rem auto 0.4rem;
@@ -301,8 +310,8 @@ svg.staff {
   color: var(--bad);
 }
 .fig {
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
   border-radius: 12px;
   padding: 0.5rem 0.8rem;
   margin: 0.6rem 0;
@@ -460,8 +469,8 @@ svg.staff {
   gap: 0.4rem;
 }
 .mistake {
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
   border-radius: 10px;
   padding: 0.2rem;
 }
@@ -743,8 +752,8 @@ th {
   margin: 0;
 }
 .sheet {
-  background: var(--card);
-  border: 1px solid var(--line);
+  background: var(--paper);
+  border: 1px solid var(--paper-line);
   border-radius: 14px;
   padding: 0.3rem 0.6rem;
   max-height: min(34vh, 300px);
@@ -752,11 +761,10 @@ th {
   margin-bottom: 0.3rem;
 }
 .system + .system {
-  border-top: 1px dashed var(--line);
+  border-top: 1px dashed var(--paper-line);
 }
 .note.done {
-  color: var(--muted);
-  opacity: 0.55;
+  color: var(--paper-muted);
 }
 .note.current {
   color: var(--accent);
