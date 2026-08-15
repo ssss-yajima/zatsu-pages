@@ -424,12 +424,6 @@ svg.staff {
   background: var(--bad);
   color: #fff;
 }
-.quiz-actions {
-  min-height: 56px;
-  display: flex;
-  justify-content: center;
-  margin-top: 0.7rem;
-}
 .result {
   text-align: center;
 }

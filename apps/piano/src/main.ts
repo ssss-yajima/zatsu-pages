@@ -301,7 +301,8 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
   let current: Question = makeQuestion(level);
   let askedAt = 0;
   let locked = false;
-  let timer: number | undefined;
+  /** この問題で一度でも間違えたか（正解数は「一発正解」で数える） */
+  let missedThis = false;
 
   view.innerHTML = `
     <section class="quiz">
@@ -314,12 +315,10 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
       <div class="staff-box" id="staff-box"></div>
       <div class="feedback" id="feedback" aria-live="polite"></div>
       ${keyboardHtml()}
-      <div class="quiz-actions"><button type="button" class="btn primary" id="next-btn" hidden>次へ</button></div>
     </section>`;
 
   const staffBox = $<HTMLElement>("#staff-box", view);
   const feedback = $<HTMLElement>("#feedback", view);
-  const nextBtn = $<HTMLButtonElement>("#next-btn", view);
   const keys = $$<HTMLButtonElement>(".key", view);
 
   const showQuestion = (): void => {
@@ -327,7 +326,7 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
     for (const k of keys) {
       k.classList.remove("ok", "ng");
     }
-    nextBtn.hidden = true;
+    missedThis = false;
     feedback.innerHTML = "&nbsp;";
     feedback.className = "feedback";
     staffBox.innerHTML = staffSvg({
@@ -355,36 +354,41 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
     showQuestion();
   };
 
+  // 正解したら少し待って次へ。間違えたら止まり、正解を押すまで進まない
+  const ADVANCE_MS = 520;
   const answer = (pc: number, key: HTMLButtonElement): void => {
     if (locked) {
       return;
     }
-    locked = true;
-    times.push((performance.now() - askedAt) / 1000);
     const ok = pc === pitchClass(current.pitch);
-    playFreq(freq(current.pitch));
     const note = $<SVGElement>(".note", staffBox);
     if (ok) {
-      correct++;
+      locked = true;
+      times.push((performance.now() - askedAt) / 1000);
+      if (!missedThis) {
+        correct++;
+      }
+      playFreq(freq(current.pitch));
+      for (const k of keys) {
+        k.classList.remove("ng");
+      }
       key.classList.add("ok");
+      note.classList.remove("ng");
       note.classList.add("ok");
       feedback.innerHTML = `<b>正解！</b> ${esc(fullName(current.pitch))}`;
       feedback.className = "feedback good";
       sndOk();
-      timer = window.setTimeout(advance, 650);
+      window.setTimeout(advance, ADVANCE_MS);
     } else {
-      mistakes.push({ q: current, answered: pc });
+      if (!missedThis) {
+        mistakes.push({ q: current, answered: pc });
+      }
+      missedThis = true;
       key.classList.add("ng");
       note.classList.add("ng");
-      const correctKey = keys.find(
-        (k) => Number(k.dataset.pc) === pitchClass(current.pitch),
-      );
-      correctKey?.classList.add("ok");
-      feedback.innerHTML = `<b>正解は ${esc(fullName(current.pitch))}</b>`;
+      feedback.innerHTML = "<b>ちがいます</b> 正しい鍵盤を押すと進みます";
       feedback.className = "feedback bad";
       sndNg();
-      nextBtn.hidden = false;
-      nextBtn.focus();
     }
   };
 
@@ -408,7 +412,7 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
             ? "あと少し。同じレベルをもう一度"
             : "間違えた音を「まなぶ」で確認してから、もう一度";
     const wrongList = mistakes.length
-      ? `<h3>間違えた音</h3><div class="mistakes">${mistakes
+      ? `<h3>つまずいた音</h3><div class="mistakes">${mistakes
           .map(
             ({ q }) =>
               `<div class="mistake">${staffSvg({ clef: q.clef, items: [{ kind: "note", pitch: q.pitch, label: fullName(q.pitch) }], minWidth: 90 })}</div>`,
@@ -418,7 +422,7 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
     view.innerHTML = `
       <section class="result">
         <h2>けっか</h2>
-        <div class="score"><span class="big">${correct}</span> / ${QUESTIONS_PER_SET}</div>
+        <div class="score"><span class="big">${correct}</span> / ${QUESTIONS_PER_SET} <span class="muted">一発正解</span></div>
         <p class="muted">平均 ${avg.toFixed(1)} 秒/問</p>
         <p class="msg">${msg}</p>
         ${wrongList}
@@ -440,13 +444,6 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
       answer(Number(k.dataset.pc), k);
     });
   }
-  nextBtn.addEventListener("click", () => {
-    if (timer) {
-      clearTimeout(timer);
-    }
-    advance();
-  });
-
   showQuestion();
 }
 
