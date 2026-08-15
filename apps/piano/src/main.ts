@@ -441,16 +441,12 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
         mistakes.push({ q, answered: pc });
       }
       missedThis = true;
-      // 押した鍵盤だけ短く赤く光らせ、正解の鍵盤を緑で示す（押すまで残す）
+      // 押した鍵盤だけ短く赤く光らせる。正解は教えず、当たるまで探させる
       for (const k of keys) {
         k.classList.remove("ng");
       }
       key.classList.add("ng");
       note.classList.add("ng");
-      const correctKey = keys.find(
-        (k) => Number(k.dataset.pc) === pitchClass(q.pitch),
-      );
-      correctKey?.classList.add("ok");
       sndNg();
       window.setTimeout(() => {
         key.classList.remove("ng");
