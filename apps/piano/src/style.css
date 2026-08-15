@@ -778,3 +778,14 @@ th {
 .drill .check {
   margin-top: 0.6rem;
 }
+
+/* ---- 教科書への導線 ---- */
+.textbook-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 72px;
+  margin-bottom: 1.2rem;
+  border-color: var(--accent);
+  background: var(--tip-bg);
+}

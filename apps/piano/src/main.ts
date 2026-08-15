@@ -779,6 +779,15 @@ function renderLearnHome(view: HTMLElement): void {
       </a>`;
   }).join("");
   view.innerHTML = `
+    <a class="card textbook-card" href="./textbook.html">
+      <div class="lesson-emoji" aria-hidden="true">📘</div>
+      <div class="level-body">
+        <div class="level-title">練習の教科書（6か月の進め方）</div>
+        <div class="level-desc">姿勢・指使い・練習の設計を段階的に。手元の教本と一緒に読む長めのテキスト</div>
+        <div class="level-stat"><span class="muted">別ページで開きます</span></div>
+      </div>
+      <div class="chev" aria-hidden="true">›</div>
+    </a>
     <section class="intro">
       <h2>楽譜の読み方・きそ知識</h2>
       <p>1つ5分ほどで読める短いレッスン。各レッスンの最後に確認クイズがあります。順番に読むのがおすすめです。</p>

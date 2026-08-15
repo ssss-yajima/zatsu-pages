@@ -17,6 +17,13 @@ export type StaffItem =
       /** 音符の右上に出す指番号など */
       finger?: string;
     }
+  | {
+      /** 和音: 同じ位置に縦に積む */
+      kind: "chord";
+      pitches: Pitch[];
+      dur?: Dur;
+      label?: string;
+    }
   | { kind: "rest"; dur: Dur; dots?: number; label?: string }
   | { kind: "bar" }
   | { kind: "end" }
@@ -207,7 +214,17 @@ export function staffSvg(opts: StaffOpts): string {
       minDy = Math.min(minDy, d - 3 * G);
       maxDy = Math.max(maxDy, d + 3 * G);
     }
-    if ((it.kind === "note" || it.kind === "rest") && it.label) {
+    if (it.kind === "chord") {
+      for (const p of it.pitches) {
+        const d = dy(clef, step(p));
+        minDy = Math.min(minDy, d - 3 * G);
+        maxDy = Math.max(maxDy, d + 3 * G);
+      }
+    }
+    if (
+      (it.kind === "note" || it.kind === "rest" || it.kind === "chord") &&
+      it.label
+    ) {
       hasLabel = true;
     }
   }
@@ -224,7 +241,8 @@ export function staffSvg(opts: StaffOpts): string {
   for (const it of items) {
     switch (it.kind) {
       case "note":
-      case "rest": {
+      case "rest":
+      case "chord": {
         const base = it.kind === "note" && it.pitch.acc !== 0 ? 38 : 30;
         // ラベルが長いときは重ならないよう間隔を広げる（全角 1 文字 ≒ 10 単位）
         const w = Math.max(base, labelWidth(it.label));
@@ -304,6 +322,42 @@ export function staffSvg(opts: StaffOpts): string {
         }
         g += "</g>";
         out += g;
+        break;
+      }
+      case "chord": {
+        const dur = it.dur ?? "q";
+        const midStep = MID_STEP[clef];
+        const steps = it.pitches.map((p) => step(p)).sort((a, b) => a - b);
+        let g = '<g class="note">';
+        for (const p of it.pitches) {
+          const s = step(p);
+          const y = mid + dy(clef, s);
+          for (let ls = midStep + 6; ls <= s; ls += 2) {
+            const ly = mid + dy(clef, ls);
+            g += `<line x1="${x - 10}" y1="${ly}" x2="${x + 10}" y2="${ly}" stroke="currentColor" stroke-width="1.2"/>`;
+          }
+          for (let ls = midStep - 6; ls >= s; ls -= 2) {
+            const ly = mid + dy(clef, ls);
+            g += `<line x1="${x - 10}" y1="${ly}" x2="${x + 10}" y2="${ly}" stroke="currentColor" stroke-width="1.2"/>`;
+          }
+          g += accidental(p.acc, x - 12, y);
+          g += noteHead(x, y, dur === "w" || dur === "h");
+        }
+        if (dur !== "w") {
+          // 符尾は和音の平均位置で向きを決め、端から端まで伸ばす
+          const avg = steps.reduce((a, b) => a + b, 0) / steps.length;
+          const up = avg < midStep;
+          const lo = mid + dy(clef, steps[0]);
+          const hi = mid + dy(clef, steps[steps.length - 1]);
+          const sx = up ? x + 5.6 : x - 5.6;
+          const y1 = up ? lo : hi;
+          const y2 = up ? hi - 33 : lo + 33;
+          g += `<line x1="${sx}" y1="${y1}" x2="${sx}" y2="${y2}" stroke="currentColor" stroke-width="1.6"/>`;
+        }
+        if (it.label) {
+          g += `<text x="${x}" y="${height - 4}" text-anchor="middle" font-size="10" fill="currentColor" class="note-label">${esc(it.label)}</text>`;
+        }
+        out += `${g}</g>`;
         break;
       }
       case "rest": {
