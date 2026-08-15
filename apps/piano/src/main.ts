@@ -332,7 +332,7 @@ function renderQuizRun(view: HTMLElement, level: Level): void {
     feedback.className = "feedback";
     staffBox.innerHTML = staffSvg({
       clef: current.clef,
-      items: [{ kind: "note", pitch: current.pitch, cls: "current" }],
+      items: [{ kind: "note", pitch: current.pitch, cls: "q" }],
       padTop: 40,
       padBottom: 40,
       minWidth: 150,

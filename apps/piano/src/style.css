@@ -1,5 +1,6 @@
 :root {
-  color-scheme: light dark;
+  /* 楽譜アプリなので常にライト表示（紙の楽譜と同じ見た目に固定） */
+  color-scheme: light;
   font-family:
     system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
   line-height: 1.6;
@@ -23,24 +24,6 @@
   --paper-muted: #9a938a;
   --paper-line: #e6dfd5;
   --nav-h: 64px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #171513;
-    --card: #23201c;
-    --ink: #f1ebe3;
-    --muted: #a39b91;
-    --line: #3a352f;
-    --accent: #e0805a;
-    --accent-ink: #1a120d;
-    --good: #6cc492;
-    --good-bg: #1c3327;
-    --bad: #f28b82;
-    --bad-bg: #3d211f;
-    --key-white: #f3ede4;
-    --key-black: #0e0d0c;
-    --tip-bg: #33291b;
-  }
 }
 
 * {
