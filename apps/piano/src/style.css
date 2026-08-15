@@ -4,25 +4,26 @@
   font-family:
     system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
   line-height: 1.6;
-  --bg: #faf7f2;
+  --bg: #ebe7e0;
   --card: #ffffff;
   --ink: #2b2622;
   --muted: #6b645c;
-  --line: #e6dfd5;
+  --line: #d6cfc4;
   --accent: #b5542d;
   --accent-ink: #ffffff;
   --good: #1f7a4d;
   --good-bg: #e6f4ec;
   --bad: #b3261e;
   --bad-bg: #fbe9e7;
-  --key-white: #fffdf9;
-  --key-black: #2b2622;
+  --key-white: #ffffff;
+  --key-black: #1a1613;
   --tip-bg: #fdf3e2;
   /* 楽譜は常に白い紙に黒い音符（ダークモードでも反転しない） */
-  --paper: #fffdf8;
-  --paper-ink: #1a1613;
-  --paper-muted: #9a938a;
-  --paper-line: #e6dfd5;
+  --paper: #ffffff;
+  --paper-ink: #111;
+  --paper-muted: #a09890;
+  --paper-line: #cfc7bb;
+  --paper-shadow: 0 1px 3px rgb(40 30 20 / 12%), 0 4px 14px rgb(40 30 20 / 8%);
   --nav-h: 64px;
 }
 
@@ -281,6 +282,7 @@ svg.staff {
 .staff-box {
   background: var(--paper);
   border: 1px solid var(--paper-line);
+  box-shadow: var(--paper-shadow);
   border-radius: 14px;
   padding: 0.4rem 1rem;
   margin: 0.6rem auto 0.4rem;
@@ -295,6 +297,7 @@ svg.staff {
 .fig {
   background: var(--paper);
   border: 1px solid var(--paper-line);
+  box-shadow: var(--paper-shadow);
   border-radius: 12px;
   padding: 0.5rem 0.8rem;
   margin: 0.6rem 0;
@@ -362,7 +365,8 @@ svg.staff {
   height: 180px;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 1px solid #b9b1a5;
+  box-shadow: var(--paper-shadow);
   user-select: none;
   touch-action: manipulation;
 }
@@ -374,7 +378,7 @@ svg.staff {
 .key.white {
   flex: 1;
   background: var(--key-white);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid #b9b1a5;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -405,7 +409,7 @@ svg.staff {
   box-shadow: 0 2px 0 rgb(0 0 0 / 30%);
 }
 .key.white:active {
-  background: #eee6d8;
+  background: #e4ded4;
 }
 .key.black:active {
   background: #444;
@@ -737,6 +741,7 @@ th {
 .sheet {
   background: var(--paper);
   border: 1px solid var(--paper-line);
+  box-shadow: var(--paper-shadow);
   border-radius: 14px;
   padding: 0.3rem 0.6rem;
   max-height: min(34vh, 300px);
